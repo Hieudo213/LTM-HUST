@@ -9,18 +9,17 @@
 
 void sendRequest(SOCKET clientSocket, const std::string& request);
 
-void showMenu(SOCKET clientSocket) {
+void showMenu(SOCKET clientSocket, const std::string& username) {
     while (true) {
         std::string menuCommand;
-        std::cout << "Menu:\n";
-        std::cout << "1. ADD_LOCATION\n";
-        std::cout << "2. LIST_LOCATIONS\n";
-        std::cout << "3. UPDATE_LOCATION\n";
-        std::cout << "4. DELETE_LOCATION\n";
-        std::cout << "5. LIST_ADMIN_LOCATIONS\n";
-        std::cout << "6. SHARE_LOCATION\n";
-        std::cout << "7. GET_NOTIFICATIONS\n";
-        std::cout << "8. LOGOUT\n";
+        std::cout << "1. Add new location\n";
+        std::cout << "2. Show my location\n";
+        std::cout << "3. Update my location\n";
+        std::cout << "4. Delete my location\n";
+        std::cout << "5. Show my suggested locations\n";
+        std::cout << "6. Share location to my friend\n";
+        std::cout << "7. My notification\n";
+        std::cout << "8. Logout\n";
         std::cout << "9. Exit\n";
         std::cout << "Enter your choice: ";
         std::getline(std::cin, menuCommand);
@@ -31,7 +30,7 @@ void showMenu(SOCKET clientSocket) {
             std::getline(std::cin, locationName);
             std::cout << "Enter description: ";
             std::getline(std::cin, description);
-            std::string request = "ADD_LOCATION " + locationName + " " + description;
+            std::string request = "ADD_LOCATION \"" + locationName + "\" \"" + description + "\"";
             sendRequest(clientSocket, request);
         }
         else if (menuCommand == "2") {
@@ -48,7 +47,7 @@ void showMenu(SOCKET clientSocket) {
             std::getline(std::cin, locationName);
             std::cout << "Enter new description: ";
             std::getline(std::cin, description);
-            std::string request = "UPDATE_LOCATION " + std::to_string(id) + " " + locationName + " " + description;
+            std::string request = "UPDATE_LOCATION " + std::to_string(id) + " \"" + locationName + "\" \"" + description + "\"";
             sendRequest(clientSocket, request);
         }
         else if (menuCommand == "4") {
@@ -101,8 +100,11 @@ void sendRequest(SOCKET clientSocket, const std::string& request) {
         buffer[bytesReceived] = '\0';
         std::string response(buffer);
         std::cout << "Server response:\n" << response << "\n";
-        if (response.find("SHOW_MENU") != std::string::npos) {
-            showMenu(clientSocket);
+        if (response.find("Hello") != std::string::npos) {
+            size_t pos = response.find("Hello") + 6;
+            size_t end_pos = response.find(", here are your features:");
+            std::string username = response.substr(pos, end_pos - pos);
+            showMenu(clientSocket, username);
         }
     }
 }

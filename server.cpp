@@ -19,6 +19,7 @@ struct Location {
     std::string username;
     std::string locationName;
     std::string description;
+    std::string sharedBy;
 };
 
 struct AdminLocation {
@@ -68,14 +69,14 @@ std::string registerUser(const std::string& username, const std::string& passwor
 std::string loginUser(const std::string& username, const std::string& password) {
     for (const auto& user : users) {
         if (user.username == username && user.password == password) {
-            return "Login successfully.\nSHOW_MENU";
+            return "Hello " + username + ", here are your features:";
         }
     }
     return "Invalid username or password.\n";
 }
 
 std::string addLocation(const std::string& username, const std::string& locationName, const std::string& description) {
-    locations.push_back({ nextLocationId++, username, locationName, description });
+    locations.push_back({ nextLocationId++, username, locationName, description, "" });
     return "Location added successfully.\n";
 }
 
@@ -107,6 +108,9 @@ std::string listUserLocations(const std::string& username) {
             result += "ID: " + std::to_string(location.id) + "\n";
             result += "Location: " + location.locationName + "\n";
             result += "Description: " + location.description + "\n";
+            if (!location.sharedBy.empty()) {
+                result += "Shared by: " + location.sharedBy + "\n";
+            }
             result += "Added by: " + location.username + "\n\n";
         }
     }
@@ -135,6 +139,9 @@ std::string shareLocation(int locationId, const std::string& sharedBy, const std
         if (location.id == locationId && location.username == sharedBy) {
             sharedLocations.push_back({ locationId, sharedBy, sharedWith });
             notifications.push_back({ sharedWith, locationId, sharedBy });
+
+            // Thêm địa điểm vào danh sách địa điểm của người dùng được chia sẻ
+            locations.push_back({ location.id, sharedWith, location.locationName, location.description, sharedBy });
             return "Location shared successfully.\n";
         }
     }
@@ -192,7 +199,7 @@ void processClientRequest(SOCKET clientSocket) {
             std::string username, password;
             ss >> username >> password;
             response = loginUser(username, password);
-            if (response.find("Login successfully") != std::string::npos) {
+            if (response.find("Hello") != std::string::npos) {
                 currentUser = username;
             }
         }
@@ -202,8 +209,10 @@ void processClientRequest(SOCKET clientSocket) {
             }
             else {
                 std::string locationName, description;
-                ss >> locationName;
-                std::getline(ss, description);
+                std::getline(ss, locationName, '"');
+                std::getline(ss, locationName, '"');
+                std::getline(ss, description, '"');
+                std::getline(ss, description, '"');
                 response = addLocation(currentUser, locationName, description);
             }
         }
@@ -225,8 +234,11 @@ void processClientRequest(SOCKET clientSocket) {
             else {
                 int id;
                 std::string locationName, description;
-                ss >> id >> locationName;
-                std::getline(ss, description);
+                ss >> id;
+                std::getline(ss, locationName, '"');
+                std::getline(ss, locationName, '"');
+                std::getline(ss, description, '"');
+                std::getline(ss, description, '"');
                 response = updateLocation(id, currentUser, locationName, description);
             }
         }
